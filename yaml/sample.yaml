@@ -1,0 +1,45 @@
+configs:
+    -   
+        hostname: a-test.com
+        password: 1234
+        username: admin
+        authkey: |+
+          aaaa
+          aaaa
+          aaaa
+          aaaa
+        proxy: 0
+        port: 123
+    -   
+        hostname: b-test.com
+        password: 4333
+        username: root
+        authkey: |+
+          bbbb
+          bbbb
+          bbbb
+          bbbb
+        proxy: 1
+        port: 222
+    -   
+        hostname: c-test.com
+        password: 544
+        username: fack
+        authkey: |+
+          bbbb
+          bbbb
+          bbaa
+          bbbb
+        proxy: 1
+        port: 5432
+    -   
+        hostname: d-test.com
+        password: 43
+        username: abfdkl
+        authkey: |+
+          bbbb
+          bbaa
+          bbbb
+          bbbb
+        proxy: 2
+        port: 12

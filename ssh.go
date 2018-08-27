@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net"
 	"os"
@@ -16,9 +17,21 @@ import (
 	"github.com/manifoldco/promptui"
 
 	db "./db"
+	yaml "./yaml"
 )
 
 func main() {
+
+	var (
+		insert = flag.String("insertyaml", "", "insert DB to yaml file path.")
+	)
+	flag.Parse()
+
+	if *insert != "" {
+		conf := yaml.ReadYaml(*insert)
+		db.InsertDB(conf.Confs)
+		os.Exit(0)
+	}
 
 	host := db.GetAnyHost()
 

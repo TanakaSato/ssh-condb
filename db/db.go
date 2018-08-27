@@ -8,30 +8,71 @@ import (
 )
 
 type Sshconfig struct {
-	ID       int
-	Hostname string
-	Password string
-	Username string
-	Authkey  string
-	Proxy    int
-	Port     int
+	ID       int    `yaml:"id"`
+	Hostname string `yaml:"hostname"`
+	Password string `yaml:"password"`
+	Username string `yaml:"username"`
+	Authkey  string `yaml:"authkey"`
+	Proxy    int    `yaml:"proxy"`
+	Port     int    `yaml:"port"`
 }
 
-func Insert() {
-	// TODO
-	// _, err = db.Exec("insert into user values (?, ?, ?) ", 1, "hoge", 30)
-}
+func InsertDB(confs []Sshconfig) {
 
-func Update() {
-	// TODO
-}
-
-func GetSingleHost(hostname string) Sshconfig {
-	db, err := sql.Open("mysql", "root:mysql@tcp(localhost:3306)/testthird?parseTime=true")
+	db, err := sql.Open("mysql", "root:mysql@tcp(localhost:3306)/testdb?parseTime=true")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
+
+	db.SetMaxIdleConns(0)
+
+	rows, err := db.Query("SELECT * FROM sshconfig")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	n := 0
+	for rows.Next() {
+		n = n + 1
+	}
+
+	stmt, err := db.Prepare(`INSERT INTO inserttest.sshconfig(id, hostname, password, username, authkey, proxy, port) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer stmt.Close()
+
+	for _, m := range confs {
+		n = n + 1
+		_, err := stmt.Exec(
+			n,
+			&m.Hostname,
+			&m.Password,
+			&m.Username,
+			&m.Authkey,
+			&m.Proxy,
+			&m.Port)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+func UpdateDB() {
+	// TODO
+}
+
+func GetSingleHost(hostname string) Sshconfig {
+
+	db, err := sql.Open("mysql", "root:mysql@tcp(localhost:3306)/testdb?parseTime=true")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
 	db.SetMaxIdleConns(0)
 
 	user := Sshconfig{}
@@ -50,11 +91,13 @@ func GetSingleHost(hostname string) Sshconfig {
 }
 
 func GetAnyHost() []Sshconfig {
-	db, err := sql.Open("mysql", "root:mysql@tcp(localhost:3306)/testthird?parseTime=true")
+
+	db, err := sql.Open("mysql", "root:mysql@tcp(localhost:3306)/testdb?parseTime=true")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
+
 	db.SetMaxIdleConns(0)
 
 	rows, err := db.Query("SELECT * FROM sshconfig")
@@ -85,11 +128,13 @@ func GetAnyHost() []Sshconfig {
 }
 
 func GetID(id int) Sshconfig {
-	db, err := sql.Open("mysql", "root:mysql@tcp(localhost:3306)/testthird?parseTime=true")
+
+	db, err := sql.Open("mysql", "root:mysql@tcp(localhost:3306)/testdb?parseTime=true")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
+
 	db.SetMaxIdleConns(0)
 
 	user := Sshconfig{}
