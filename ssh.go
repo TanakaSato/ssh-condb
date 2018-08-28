@@ -16,6 +16,8 @@ import (
 
 	"github.com/manifoldco/promptui"
 
+	"github.com/shiena/ansicolor"
+
 	db "./db"
 	yaml "./yaml"
 )
@@ -101,13 +103,16 @@ func main() {
 		ssh.TTY_OP_OSPEED: 14400,
 	}
 
-	err = session.RequestPty("xterm", h, w, modes)
-	if err != nil {
+	// if err := session.RequestPty("xterm-256color", h, w, modes); err != nil {
+	// if err := session.RequestPty("vt100", h, w, modes); err != nil {
+	if err = session.RequestPty("xterm", h, w, modes); err != nil {
 		log.Println(err)
 	}
 
-	session.Stdout = os.Stdout
-	session.Stderr = os.Stderr
+	// session.Stdout = os.Stdout
+	// session.Stderr = os.Stderr
+	session.Stdout = ansicolor.NewAnsiColorWriter(os.Stdout)
+	session.Stderr = ansicolor.NewAnsiColorWriter(os.Stderr)
 	session.Stdin = os.Stdin
 
 	err = session.Shell()
@@ -189,8 +194,4 @@ func makeSSHConfig(sc db.Sshconfig) *ssh.ClientConfig {
 	}
 
 	return sshConfig
-}
-
-func fp() {
-	// TODO peco, fzf like
 }

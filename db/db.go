@@ -19,13 +19,11 @@ type Sshconfig struct {
 
 func InsertDB(confs []Sshconfig) {
 
-	db, err := sql.Open("mysql", "root:mysql@tcp(localhost:3306)/testdb?parseTime=true")
+	db, err := sql.Open("mysql", "root:mysql@tcp(localhost:3306)/testthird?parseTime=true")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
-
-	db.SetMaxIdleConns(0)
 
 	rows, err := db.Query("SELECT * FROM sshconfig")
 	if err != nil {
@@ -65,15 +63,17 @@ func UpdateDB() {
 	// TODO
 }
 
+func DeleteDB() {
+	// TODO
+}
+
 func GetSingleHost(hostname string) Sshconfig {
 
-	db, err := sql.Open("mysql", "root:mysql@tcp(localhost:3306)/testdb?parseTime=true")
+	db, err := sql.Open("mysql", "root:mysql@tcp(localhost:3306)/testthird?parseTime=true")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
-
-	db.SetMaxIdleConns(0)
 
 	user := Sshconfig{}
 	if err := db.QueryRow("SELECT * FROM sshconfig WHERE hostname = ?", hostname).Scan(
@@ -92,13 +92,11 @@ func GetSingleHost(hostname string) Sshconfig {
 
 func GetAnyHost() []Sshconfig {
 
-	db, err := sql.Open("mysql", "root:mysql@tcp(localhost:3306)/testdb?parseTime=true")
+	db, err := sql.Open("mysql", "root:mysql@tcp(localhost:3306)/testthird?parseTime=true")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
-
-	db.SetMaxIdleConns(0)
 
 	rows, err := db.Query("SELECT * FROM sshconfig")
 	if err != nil {
@@ -129,13 +127,11 @@ func GetAnyHost() []Sshconfig {
 
 func GetID(id int) Sshconfig {
 
-	db, err := sql.Open("mysql", "root:mysql@tcp(localhost:3306)/testdb?parseTime=true")
+	db, err := sql.Open("mysql", "root:mysql@tcp(localhost:3306)/testthird?parseTime=true")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
-
-	db.SetMaxIdleConns(0)
 
 	user := Sshconfig{}
 	if err := db.QueryRow("SELECT * FROM sshconfig WHERE id = ?", id).Scan(
