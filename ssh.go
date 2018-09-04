@@ -18,8 +18,8 @@ import (
 
 	"github.com/shiena/ansicolor"
 
-	db "./db"
-	yaml "./yaml"
+	db "ssh-ct/db"
+	"ssh-ct/yaml"
 )
 
 func main() {
@@ -31,11 +31,11 @@ func main() {
 
 	if *insert != "" {
 		conf := yaml.ReadYaml(*insert)
-		db.InsertDB(conf.Confs)
+		db.InsertDBs(conf.Confs)
 		os.Exit(0)
 	}
 
-	host := db.GetAnyHost()
+	host := db.GetHosts("*")
 
 	templates := &promptui.SelectTemplates{
 		Label:    "{{ . }}?",
@@ -72,12 +72,21 @@ func main() {
 		return
 	}
 
-	sc := db.GetSingleHost(host[i].Hostname)
-	if sc.Hostname == "" {
-		log.Fatal("invalid hostname.\n")
+	sc := db.GetHosts(host[i].Hostname)
+
+	ss := db.Sshconfig{}
+
+	if len(sc) == 1 {
+		ss = sc[0]
+	} else if len(sc) >= 2 {
+		log.Println("DB Failure: your DB have Multi Hostname")
+		os.Exit(1)
+	} else {
+		log.Println("DB Failure: your hostname don't have DB")
+		os.Exit(1)
 	}
 
-	client := anyProxy(sc)
+	client := anyProxy(ss)
 
 	session, err := client.NewSession()
 	if err != nil {

@@ -3,7 +3,8 @@ package yaml
 import (
 	"io/ioutil"
 
-	db "../db"
+	db "ssh-ct/db"
+
 	yaml "gopkg.in/yaml.v2"
 )
 

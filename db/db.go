@@ -1,149 +1,184 @@
 package db
 
 import (
-	"database/sql"
 	"log"
 
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
+// Sshconfig is
 type Sshconfig struct {
-	ID       int    `yaml:"id"`
-	Hostname string `yaml:"hostname"`
-	Password string `yaml:"password"`
-	Username string `yaml:"username"`
-	Authkey  string `yaml:"authkey"`
-	Proxy    int    `yaml:"proxy"`
-	Port     int    `yaml:"port"`
+	ID       int    `gorm:"primary_key" yaml:"id"`
+	Hostname string `gorm:"hostname" yaml:"hostname"`
+	Password string `gorm:"password" yaml:"password"`
+	Username string `gorm:"username" yaml:"username"`
+	Authkey  string `gorm:"authkey" yaml:"authkey"`
+	Proxy    int    `gorm:"proxy" yaml:"proxy"`
+	Port     int    `gorm:"port" yaml:"port"`
 }
 
-func InsertDB(confs []Sshconfig) {
+// NewSshconfig is
+func NewSshconfig(hostname, password, username, authkey string, proxy, port int) *Sshconfig {
 
-	db, err := sql.Open("mysql", "root:mysql@tcp(localhost:3306)/testthird?parseTime=true")
-	if err != nil {
-		log.Fatal(err)
+	a := &Sshconfig{}
+
+	a.ID = 0
+	a.Hostname = hostname
+	a.Password = password
+	a.Username = username
+	a.Authkey = authkey
+	a.Proxy = proxy
+	a.Port = port
+
+	return a
+}
+
+// CompSshconfig is
+func (a *Sshconfig) CompSshconfig(b Sshconfig) bool {
+
+	if a.Hostname == b.Hostname && a.Password == b.Password && a.Username == b.Username &&
+		a.Authkey == b.Authkey && a.Proxy == b.Proxy && a.Port == b.Port {
+		return true
 	}
+
+	// log.Println("------------------------------------- a data is -------------------------------------")
+	// log.Println(a)
+	// log.Println("------------------------------------- b data is -------------------------------------")
+	// log.Println(b)
+
+	return false
+}
+
+var dbname = string("mysql")
+var dbuser = string("root")
+var dbpassword = string("mysql")
+var protcol = string("tcp(127.0.0.1:3306)")
+var conndbname = string("test_db")
+
+func initDB() *gorm.DB {
+
+	conn := dbuser + ":" + dbpassword + "@" + protcol + "/" + conndbname
+
+	db, err := gorm.Open(dbname, conn)
+	if err != nil {
+		log.Println(err)
+	}
+
+	return db
+}
+
+// CreateNewHostData is a
+func CreateNewHostData(hostname, password, username, authkey string, proxy, port int) {
+
+	conf := NewSshconfig(hostname, password, username, authkey, proxy, port)
+
+	newconf := InsertDB(*conf)
+
+	if newconf.CompSshconfig(*conf) {
+		log.Println("your config data is db insert success!")
+	} else {
+		log.Println("your config data is db insert FAILED!")
+	}
+}
+
+// InsertDB is
+func InsertDB(conf Sshconfig) Sshconfig {
+
+	db := initDB()
 	defer db.Close()
 
-	rows, err := db.Query("SELECT * FROM sshconfig")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
+	db.Create(&conf)
 
-	n := 0
-	for rows.Next() {
-		n = n + 1
-	}
+	return conf
+}
 
-	stmt, err := db.Prepare(`INSERT INTO inserttest.sshconfig(id, hostname, password, username, authkey, proxy, port) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+// InsertDBs is
+func InsertDBs(confs []Sshconfig) {
 
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer stmt.Close()
+	db := initDB()
+	defer db.Close()
 
-	for _, m := range confs {
-		n = n + 1
-		_, err := stmt.Exec(
-			n,
-			&m.Hostname,
-			&m.Password,
-			&m.Username,
-			&m.Authkey,
-			&m.Proxy,
-			&m.Port)
-		if err != nil {
-			log.Fatal(err)
-		}
+	for _, c := range confs {
+		_ = InsertDB(c)
 	}
 }
 
+// UpdateDB is
 func UpdateDB() {
+
+	db := initDB()
+	defer db.Close()
+
 	// TODO
 }
 
-func DeleteDB() {
-	// TODO
-}
+// DeleteDB is
+func DeleteDB(id int) {
 
-func GetSingleHost(hostname string) Sshconfig {
-
-	db, err := sql.Open("mysql", "root:mysql@tcp(localhost:3306)/testthird?parseTime=true")
-	if err != nil {
-		log.Fatal(err)
-	}
+	db := initDB()
 	defer db.Close()
 
-	user := Sshconfig{}
-	if err := db.QueryRow("SELECT * FROM sshconfig WHERE hostname = ?", hostname).Scan(
-		&user.ID,
-		&user.Hostname,
-		&user.Password,
-		&user.Username,
-		&user.Authkey,
-		&user.Proxy,
-		&user.Port); err != nil {
-		log.Fatal(err)
+	conf := GetID(id)
+	if conf.Hostname == "" {
+		log.Println("unknown data")
+		return
 	}
 
-	return user
+	db.Delete(conf)
+
+	newconf := GetID(id)
+
+	if newconf.Hostname == "" {
+		log.Println("remove data success!")
+	} else {
+		log.Println("remove data FAILED!")
+	}
+
 }
 
-func GetAnyHost() []Sshconfig {
+// GetHost is get from db any host sshconfig setting
+func GetHosts(hostname string) []Sshconfig {
 
-	db, err := sql.Open("mysql", "root:mysql@tcp(localhost:3306)/testthird?parseTime=true")
-	if err != nil {
-		log.Fatal(err)
-	}
+	db := initDB()
 	defer db.Close()
 
-	rows, err := db.Query("SELECT * FROM sshconfig")
-	if err != nil {
-		log.Fatal(err)
+	// log.Println("Search hostname is " + hostname)
+	confs := []Sshconfig{}
+
+	if hostname == "*" {
+		db.Find(&confs)
+	} else {
+		db.Find(&confs, "hostname=?", hostname)
 	}
-	defer rows.Close()
 
-	users := []Sshconfig{}
-
-	for rows.Next() {
-		user := Sshconfig{}
-
-		err := rows.Scan(
-			&user.ID,
-			&user.Hostname,
-			&user.Password,
-			&user.Username,
-			&user.Authkey,
-			&user.Proxy,
-			&user.Port)
-		if err != nil {
-			log.Fatal(err)
-		}
-		users = append(users, user)
-	}
-	return users
+	return confs
 }
 
+// GetID is get from db single host sshconfig setting to id
 func GetID(id int) Sshconfig {
 
-	db, err := sql.Open("mysql", "root:mysql@tcp(localhost:3306)/testthird?parseTime=true")
-	if err != nil {
-		log.Fatal(err)
-	}
+	db := initDB()
 	defer db.Close()
 
-	user := Sshconfig{}
-	if err := db.QueryRow("SELECT * FROM sshconfig WHERE id = ?", id).Scan(
-		&user.ID,
-		&user.Hostname,
-		&user.Password,
-		&user.Username,
-		&user.Authkey,
-		&user.Proxy,
-		&user.Port); err != nil {
-		log.Fatal(err)
-	}
+	conf := Sshconfig{}
 
-	return user
+	conf.ID = id
+
+	db.Find(&conf)
+
+	return conf
+}
+
+// GetProxy is piyo
+func GetProxy(id int) []Sshconfig {
+
+	db := initDB()
+	defer db.Close()
+
+	confs := []Sshconfig{}
+
+	db.Find(&confs, "proxy=?", id)
+
+	return confs
 }
